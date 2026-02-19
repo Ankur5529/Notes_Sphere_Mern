@@ -1,0 +1,21 @@
+.features{
+    display: flex;
+    justify-content: space-around;
+    padding: 50px 0;
+    background: white;
+}
+
+.feature-card{
+    width: 250px;
+    text-align: center;
+}
+
+.feature-card h3{
+    color: #1f3c88;
+    margin-bottom: 15px;
+}
+
+.feature-card p{
+    font-size: 14px;
+    color: #444;
+}

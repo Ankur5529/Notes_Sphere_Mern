@@ -1,0 +1,229 @@
+/* Dashboard Layout */
+.dashboard {
+  max-width: 1200px;
+  margin: 40px auto;
+  padding: 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #333;
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Header Section */
+.dash-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 25px 30px;
+  border-radius: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 10px 20px rgba(118, 75, 162, 0.2);
+  margin-bottom: 30px;
+}
+
+.dash-title {
+  font-size: 28px;
+  font-weight: 700;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  letter-spacing: 0.5px;
+}
+
+.dash-user {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  font-weight: 500;
+}
+
+.logout-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 600;
+  backdrop-filter: blur(5px);
+}
+
+.logout-btn:hover {
+  background: white;
+  color: #764ba2;
+  transform: translateY(-2px);
+}
+
+/* Upload Section */
+.upload-card {
+  background: white;
+  padding: 30px;
+  border-radius: 16px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.05); /* Softer shadow */
+  border: 1px solid rgba(0,0,0,0.03);
+  margin-bottom: 40px;
+  transition: transform 0.3s ease;
+}
+
+.upload-card:hover {
+  transform: translateY(-2px);
+}
+
+.upload-card h3 {
+  margin-top: 0;
+  font-size: 22px;
+  color: #444;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.upload-form input,
+.upload-form textarea {
+  width: 100%;
+  padding: 14px 16px;
+  margin-top: 12px;
+  border-radius: 10px;
+  border: 1px solid #e0e0e0;
+  background-color: #f9f9f9;
+  font-family: inherit;
+  font-size: 15px;
+  transition: all 0.3s ease;
+}
+
+.upload-form input:focus,
+.upload-form textarea:focus {
+  outline: none;
+  border-color: #764ba2;
+  background-color: white;
+  box-shadow: 0 0 0 4px rgba(118, 75, 162, 0.1);
+}
+
+.upload-row {
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end; /* Align button to specific side if needed */
+  gap: 15px;
+  align-items: center;
+}
+
+.upload-row input[type="file"] {
+    border: none;
+    background: transparent;
+    padding: 0;
+}
+
+.upload-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  transition: all 0.3s ease;
+}
+
+.upload-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+}
+
+/* Notes Grid */
+.notes-heading {
+  margin: 40px 0 20px;
+  font-size: 24px;
+  color: #333;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #eee;
+}
+
+.notes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 25px;
+}
+
+.note-card {
+  background: white;
+  padding: 25px;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+  transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+  border: 1px solid transparent;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.note-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  border-color: #e0e0e0;
+}
+
+.note-card h4 {
+  margin: 0 0 10px 0;
+  font-size: 18px;
+  color: #2c3e50;
+}
+
+.note-card p {
+  color: #666;
+  line-height: 1.5;
+  margin-bottom: 20px;
+  flex-grow: 1;
+}
+
+.note-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: auto;
+}
+
+.note-actions button {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.view-btn {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+.view-btn:hover { background: #bbdefb; }
+
+.download-btn {
+  background: #f3e5f5;
+  color: #7b1fa2;
+}
+.download-btn:hover { background: #e1bee7; }
+
+.delete-btn {
+  background: #ffebee;
+  color: #c62828;
+}
+.delete-btn:hover { background: #ffcdd2; }
+
+.note-card.empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 50px;
+  background: #f8f9fa;
+  border: 2px dashed #ddd;
+  box-shadow: none;
+  color: #999;
+  font-size: 18px;
+}

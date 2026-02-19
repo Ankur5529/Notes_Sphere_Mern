@@ -1,0 +1,38 @@
+.navbar{
+    background: #1f3c88;
+    color: white;
+    padding:15px 40px;
+    display:flex;
+    justify-content: space-between;
+    align-items: center;
+
+}
+
+.logo{
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.nav-links a{
+    color: white;
+    text-decoration: none;
+    margin-right: 20px;
+
+}
+
+.Signup-btn{
+    background: #fbc02d;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+.login-link {
+    background: transparent;
+    border: none;
+    color: white;
+    margin-right: 15px;
+    cursor: pointer;
+    font-size: 14px;
+}
