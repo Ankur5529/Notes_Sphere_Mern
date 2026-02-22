@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import "./Login.css";
+import { API_BASE } from "../config";
 
 export default function Login({ onClose, onOpenSignup, onSucess }) {
     const navigate = useNavigate();
@@ -10,7 +11,7 @@ export default function Login({ onClose, onOpenSignup, onSucess }) {
 
     const handleLogin = async () => {
         try {
-            const response = await fetch("http://localhost:5000/api/auth/login", {
+            const response = await fetch(`${API_BASE}/api/auth/login`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email, password }),

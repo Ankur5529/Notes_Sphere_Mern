@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import "./Dashboard.css";
+import { API_BASE } from "../config";
 
 export default function Dashboard({ onLogout }) {
   const navigate = useNavigate();
@@ -25,7 +26,7 @@ export default function Dashboard({ onLogout }) {
   const fetchNotes = async () => {
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch("http://localhost:5000/api/notes", {
+      const res = await fetch(`${API_BASE}/api/notes`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -64,7 +65,7 @@ export default function Dashboard({ onLogout }) {
     }
 
     try {
-      const res = await fetch("http://localhost:5000/api/notes/upload", {
+      const res = await fetch(`${API_BASE}/api/notes/upload`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -95,7 +96,7 @@ export default function Dashboard({ onLogout }) {
 
     const token = localStorage.getItem("token");
     try {
-      const res = await fetch(`http://localhost:5000/api/notes/${id}`, {
+      const res = await fetch(`${API_BASE}/api/notes/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -119,7 +120,7 @@ export default function Dashboard({ onLogout }) {
   const handleEditSave = async (id) => {
     const token = localStorage.getItem("token");
     try {
-      const res = await fetch(`http://localhost:5000/api/notes/${id}`, {
+      const res = await fetch(`${API_BASE}/api/notes/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -141,7 +142,7 @@ export default function Dashboard({ onLogout }) {
 
   const handleView = (fileUrl) => {
     if (fileUrl) {
-      window.open(`http://localhost:5000${fileUrl}`, "_blank");
+      window.open(`${API_BASE}${fileUrl}`, "_blank");
     } else {
       alert("No file attached to this note.");
     }
