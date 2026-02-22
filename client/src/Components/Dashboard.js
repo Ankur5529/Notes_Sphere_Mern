@@ -10,6 +10,10 @@ export default function Dashboard({ onLogout }) {
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [editingId, setEditingId] = useState(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editDescription, setEditDescription] = useState("");
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -106,6 +110,35 @@ export default function Dashboard({ onLogout }) {
     }
   };
 
+  const startEditing = (note) => {
+    setEditingId(note._id);
+    setEditTitle(note.title);
+    setEditDescription(note.description);
+  };
+
+  const handleEditSave = async (id) => {
+    const token = localStorage.getItem("token");
+    try {
+      const res = await fetch(`http://localhost:5000/api/notes/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ title: editTitle, description: editDescription })
+      });
+      if (res.ok) {
+        const updatedNote = await res.json();
+        setNotes(notes.map(note => note._id === id ? updatedNote : note));
+        setEditingId(null);
+      } else {
+        alert("Failed to update note");
+      }
+    } catch (err) {
+      console.error("Error updating note:", err);
+    }
+  };
+
   const handleView = (fileUrl) => {
     if (fileUrl) {
       window.open(`http://localhost:5000${fileUrl}`, "_blank");
@@ -113,6 +146,11 @@ export default function Dashboard({ onLogout }) {
       alert("No file attached to this note.");
     }
   };
+
+  const filteredNotes = notes.filter(note =>
+    note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (note.description && note.description.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
 
   return (
     <div className="dashboard">
@@ -159,24 +197,57 @@ export default function Dashboard({ onLogout }) {
       </div>
 
       {/* Notes Section */}
-      <h3 className="notes-heading">📂 My Notes</h3>
+      <div className="notes-header-row">
+        <h3 className="notes-heading">📂 My Notes</h3>
+        <input
+          type="text"
+          className="search-bar"
+          placeholder="Search notes..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </div>
 
       <div className="notes-grid">
-        {notes.length === 0 ? (
+        {filteredNotes.length === 0 ? (
           <div className="note-card empty">
-            <p>📭 No notes found. Upload one!</p>
+            <p>📭 No notes found.</p>
           </div>
         ) : (
-          notes.map((note) => (
+          filteredNotes.map((note) => (
             <div className="note-card" key={note._id}>
-              <h4>{note.title}</h4>
-              <p>{note.description}</p>
-              <div className="note-actions">
-                <button className="view-btn" onClick={() => handleView(note.fileUrl)}>View</button>
-                {/* Download can be same as view or use 'download' attribute if sending file directly */}
-                {/* <button className="download-btn">Download</button> */}
-                <button className="delete-btn" onClick={() => handleDelete(note._id)}>Delete</button>
-              </div>
+              {editingId === note._id ? (
+                <div className="edit-form">
+                  <input
+                    type="text"
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                    className="edit-input"
+                  />
+                  <textarea
+                    value={editDescription}
+                    onChange={(e) => setEditDescription(e.target.value)}
+                    className="edit-textarea"
+                  />
+                  <div className="note-actions">
+                    <button className="save-btn" onClick={() => handleEditSave(note._id)}>Save</button>
+                    <button className="cancel-btn" onClick={() => setEditingId(null)}>Cancel</button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="note-header-flex">
+                    <h4>{note.title}</h4>
+                    <span className="note-date">{new Date(note.createdAt).toLocaleDateString()}</span>
+                  </div>
+                  <p>{note.description}</p>
+                  <div className="note-actions">
+                    {note.fileUrl && <button className="view-btn" onClick={() => handleView(note.fileUrl)}>View file</button>}
+                    <button className="edit-btn" onClick={() => startEditing(note)}>Edit</button>
+                    <button className="delete-btn" onClick={() => handleDelete(note._id)}>Delete</button>
+                  </div>
+                </>
+              )}
             </div>
           ))
         )}

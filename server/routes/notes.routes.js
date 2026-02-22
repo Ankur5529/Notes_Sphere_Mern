@@ -46,6 +46,25 @@ router.post('/upload', auth, upload.single('noteFile'), async (req, res) => {
     }
 });
 
+// Update a note
+router.put('/:id', auth, async (req, res) => {
+    try {
+        const { title, description } = req.body;
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            return res.status(400).json({ message: 'Invalid Note ID' });
+        }
+        const updatedNote = await Note.findOneAndUpdate(
+            { _id: req.params.id, userId: req.user },
+            { $set: { title, description } },
+            { new: true }
+        );
+        if (!updatedNote) return res.status(404).json({ message: 'Note not found' });
+        res.json(updatedNote);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
 // Delete a note
 router.delete('/:id', auth, async (req, res) => {
     try {

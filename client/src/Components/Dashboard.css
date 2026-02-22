@@ -227,3 +227,92 @@
   color: #999;
   font-size: 18px;
 }
+
+/* New specific styles */
+.notes-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 40px 0 20px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #eee;
+}
+
+.notes-header-row .notes-heading {
+  margin: 0;
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.search-bar {
+  padding: 10px 15px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  width: 250px;
+  font-size: 14px;
+  transition: all 0.3s;
+}
+
+.search-bar:focus {
+  outline: none;
+  border-color: #764ba2;
+  box-shadow: 0 0 0 3px rgba(118, 75, 162, 0.1);
+}
+
+.note-header-flex {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+
+.note-header-flex h4 {
+  margin: 0;
+  max-width: 70%;
+  word-wrap: break-word;
+}
+
+.note-date {
+  font-size: 12px;
+  color: #999;
+}
+
+.edit-btn {
+  background: #FFF3E0;
+  color: #E65100;
+}
+.edit-btn:hover { background: #FFE0B2; }
+
+.save-btn {
+  background: #E8F5E9;
+  color: #2E7D32;
+}
+.save-btn:hover { background: #C8E6C9; }
+
+.cancel-btn {
+  background: #F5F5F5;
+  color: #616161;
+}
+.cancel-btn:hover { background: #E0E0E0; }
+
+.edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  height: 100%;
+}
+
+.edit-input, .edit-textarea {
+  width: calc(100% - 22px);
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 14px;
+}
+
+.edit-textarea {
+  resize: vertical;
+  min-height: 80px;
+  flex-grow: 1;
+}
