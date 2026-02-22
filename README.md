@@ -8,7 +8,16 @@
 
 ## 📸 Preview
 
-![App Screenshot](./images/screenshot.png)
+### Landing Page
+![Landing Page](./images/screenshot.png)
+
+### User Dashboard
+![Dashboard](./images/dashboard.png)
+
+### Authentication
+| Login | Sign Up |
+|-------|---------|
+| ![Login](./images/login.png) | ![Sign Up](./images/signup.png) |
 
 ---
 
