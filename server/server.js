@@ -57,24 +57,7 @@ if (process.env.MONGO_URI) {
     console.warn("MONGO_URI not set; skipping MongoDB connection.");
 }
 
-// ── Serve React Frontend in Production ──────────────────────────────────────
-if (process.env.NODE_ENV === 'production') {
-    // Serve the static files from the React app
-    app.use(express.static(path.join(__dirname, 'public')));
-
-    // All unknown routes should be handled by React Router
-    app.get('*', (req, res, next) => {
-        if (req.url.startsWith('/api')) {
-            return next(); // Pass API routes to the backend
-        }
-        res.sendFile(path.join(__dirname, 'public', 'index.html'));
-    });
-} else {
-    // Test route for development
-    app.get('/', (req, res) => {
-        res.send("Notes Sphere Backend is running 🚀");
-    });
-}
+// (Moved static serving to bottom)
 
 // ── DB Health Check Middleware ──────────────────────────────────────────────
 // Returns a clear 503 if MongoDB is not connected yet,
@@ -92,6 +75,22 @@ app.use("/api", (req, res, next) => {
 
 app.use("/api/auth", authRoutes);
 app.use("/api/notes", notesRoutes);
+
+// ── Serve React Frontend in Production ──────────────────────────────────────
+if (process.env.NODE_ENV === 'production') {
+    // Serve the static files from the React app
+    app.use(express.static(path.join(__dirname, 'public')));
+
+    // All unknown routes should be handled by React Router
+    app.get('*', (req, res) => {
+        res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    });
+} else {
+    // Test route for development
+    app.get('/', (req, res) => {
+        res.send("Notes Sphere Backend is running 🚀");
+    });
+}
 
 // ── Global Error Handler ────────────────────────────────────────────────────
 app.use((err, req, res, next) => {
