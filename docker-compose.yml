@@ -1,0 +1,45 @@
+version: '3.9'
+
+services:
+  # ─── Backend API ──────────────────────────────
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: notes-sphere-server
+    ports:
+      - "5000:5000"
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+      - MONGO_URI=${MONGO_URI}
+      - JWT_SECRET=${JWT_SECRET}
+      - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
+      - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
+      - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
+      - GUEST_EMAIL=${GUEST_EMAIL}
+      - GUEST_PASSWORD=${GUEST_PASSWORD}
+    restart: unless-stopped
+    networks:
+      - notes-network
+
+  # ─── Frontend (Dev only) ──────────────────────
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile.dev
+    container_name: notes-sphere-client
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./client/src:/app/src
+    environment:
+      - REACT_APP_API_BASE=http://localhost:5000
+    networks:
+      - notes-network
+    profiles:
+      - dev
+
+networks:
+  notes-network:
+    driver: bridge

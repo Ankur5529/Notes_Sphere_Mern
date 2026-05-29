@@ -1,7 +1,8 @@
 import { useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import "./Dashboard.css";
 import { API_BASE } from "../config";
+import SkeletonCard from "./SkeletonCard";
 
 export default function Dashboard({ onLogout }) {
   const navigate = useNavigate();
@@ -10,11 +11,27 @@ export default function Dashboard({ onLogout }) {
   const [description, setDescription] = useState("");
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(true);
   const [error, setError] = useState("");
+  const [toast, setToast] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [editingId, setEditingId] = useState(null);
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null); // inline confirm
+  const fileInputRef = useRef(null);
+  const titleInputRef = useRef(null);
+
+  // Read user info from localStorage
+  const userData = JSON.parse(localStorage.getItem("user") || "{}");
+  const isGuest = userData?.isGuest;
+  const userName = userData?.name || "User";
+
+  // ── Show a toast for 3 seconds ─────────────────────────────────
+  const showToast = (msg) => {
+    setToast(msg);
+    setTimeout(() => setToast(""), 3000);
+  };
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -23,20 +40,24 @@ export default function Dashboard({ onLogout }) {
     navigate("/");
   };
 
+  // ── Fetch notes from API ───────────────────────────────────────
   const fetchNotes = async () => {
+    setFetching(true);
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch(`${API_BASE}/api/notes`, {
+      const res = await fetch(`${API_BASE}/api/notes?limit=50`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
       if (res.ok) {
-        setNotes(data);
+        setNotes(data.notes ?? data); // support both paginated and legacy response
       } else {
         console.error("Failed to fetch notes", data);
       }
     } catch (err) {
       console.error("Error fetching notes:", err);
+    } finally {
+      setFetching(false);
     }
   };
 
@@ -46,11 +67,14 @@ export default function Dashboard({ onLogout }) {
     return () => {
       document.body.style.backgroundColor = "";
     };
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleUpload = async () => {
-    if (!title) {
-      setError("Title is required");
+  // ── Upload a note ──────────────────────────────────────────────
+  const handleUpload = async (e) => {
+    e?.preventDefault();
+    if (!title.trim()) {
+      setError("Title is required.");
+      titleInputRef.current?.focus();
       return;
     }
 
@@ -60,61 +84,62 @@ export default function Dashboard({ onLogout }) {
     const formData = new FormData();
     formData.append("title", title);
     formData.append("description", description);
-    if (file) {
-      formData.append("noteFile", file);
-    }
+    if (file) formData.append("noteFile", file);
 
     try {
       const res = await fetch(`${API_BASE}/api/notes/upload`, {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
         body: formData,
       });
       const data = await res.json();
       if (res.ok) {
-        setNotes([...notes, data]);
+        setNotes((prev) => [data, ...prev]);
         setTitle("");
         setDescription("");
         setFile(null);
-        // Reset file input value if possible, or just rely on state
-        document.getElementById("fileInput").value = null;
+        if (fileInputRef.current) fileInputRef.current.value = "";
+        showToast("✅ Note uploaded successfully!");
       } else {
-        setError(data.message || "Upload failed");
+        setError(data.message || "Upload failed.");
       }
     } catch (err) {
-      setError("Error uploading note");
+      setError("Network error while uploading.");
       console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
+  // ── Delete a note ──────────────────────────────────────────────
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this note?")) return;
-
     const token = localStorage.getItem("token");
     try {
       const res = await fetch(`${API_BASE}/api/notes/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
-
       if (res.ok) {
-        setNotes(notes.filter(note => note._id !== id));
+        setNotes((prev) => prev.filter((note) => note._id !== id));
+        setConfirmDeleteId(null);
+        showToast("🗑️ Note deleted.");
       } else {
-        alert("Failed to delete note");
+        const data = await res.json();
+        setError(data.message || "Failed to delete note.");
+        setConfirmDeleteId(null);
       }
     } catch (err) {
       console.error("Error deleting note:", err);
+      setError("Network error while deleting.");
+      setConfirmDeleteId(null);
     }
   };
 
+  // ── Edit helpers ───────────────────────────────────────────────
   const startEditing = (note) => {
     setEditingId(note._id);
     setEditTitle(note.title);
-    setEditDescription(note.description);
+    setEditDescription(note.description || "");
   };
 
   const handleEditSave = async (id) => {
@@ -124,16 +149,17 @@ export default function Dashboard({ onLogout }) {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ title: editTitle, description: editDescription })
+        body: JSON.stringify({ title: editTitle, description: editDescription }),
       });
       if (res.ok) {
         const updatedNote = await res.json();
-        setNotes(notes.map(note => note._id === id ? updatedNote : note));
+        setNotes((prev) => prev.map((n) => (n._id === id ? updatedNote : n)));
         setEditingId(null);
+        showToast("✏️ Note updated!");
       } else {
-        alert("Failed to update note");
+        setError("Failed to update note.");
       }
     } catch (err) {
       console.error("Error updating note:", err);
@@ -141,118 +167,260 @@ export default function Dashboard({ onLogout }) {
   };
 
   const handleView = (fileUrl) => {
-    if (fileUrl) {
-      window.open(`${API_BASE}${fileUrl}`, "_blank");
-    } else {
+    if (!fileUrl) {
       alert("No file attached to this note.");
+      return;
     }
+    // Open in a new tab — Cloudinary serves files with correct content-type
+    // so PDFs open inline in browsers that support it, images preview normally
+    window.open(fileUrl, "_blank", "noopener,noreferrer");
   };
 
-  const filteredNotes = notes.filter(note =>
-    note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (note.description && note.description.toLowerCase().includes(searchQuery.toLowerCase()))
+  const filteredNotes = notes.filter(
+    (note) =>
+      note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (note.description &&
+        note.description.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   return (
     <div className="dashboard">
-      {/*Header*/}
-      <div className="dash-header">
-        <div className="dash-title">
+      {/* ── Toast Notification ─────────────────────────────────── */}
+      {toast && (
+        <div className="toast" role="status" aria-live="polite">
+          {toast}
+        </div>
+      )}
+
+      {/* ── Header ─────────────────────────────────────────────── */}
+      <header className="dash-header">
+        <div className="dash-title" aria-label="Notes Sphere app">
           📘<span> Notes Sphere</span>
         </div>
         <div className="dash-user">
-          <span> Welcome!</span>
-          <button className="logout-btn" onClick={handleLogout}>
+          <span aria-label={`Logged in as ${userName}`}>
+            Welcome, <strong>{userName}</strong>!
+          </span>
+          <button
+            className="logout-btn"
+            onClick={handleLogout}
+            aria-label="Log out of your account"
+          >
             Logout
           </button>
         </div>
-      </div>
-      {/* Upload Card*/}
-      <div className="upload-card">
-        <h3>➕ Upload a New Note </h3>
-        {error && <p style={{ color: 'red' }}>{error}</p>}
-        <div className="upload-form">
+      </header>
+
+      {/* ── Guest Banner ───────────────────────────────────────── */}
+      {isGuest && (
+        <div className="guest-banner" role="note">
+          👤 You're using a <strong>Guest Account</strong>. Your notes won't be
+          saved after the session. &nbsp;
+          <button
+            className="banner-link"
+            onClick={() => navigate("/")}
+            aria-label="Sign up for a free account"
+          >
+            Create a free account →
+          </button>
+        </div>
+      )}
+
+      {/* ── Upload Card ────────────────────────────────────────── */}
+      <section className="upload-card" aria-label="Upload a new note">
+        <h2>➕ Upload a New Note</h2>
+        {error && (
+          <p className="error-banner" role="alert" aria-live="assertive">
+            {error}
+          </p>
+        )}
+        <form className="upload-form" onSubmit={handleUpload} noValidate>
+          <label htmlFor="note-title">
+            Note Title <span aria-hidden="true" className="required">*</span>
+          </label>
           <input
+            id="note-title"
+            ref={titleInputRef}
             type="text"
-            placeholder="Note Title"
+            placeholder="e.g. Chapter 5 – Data Structures"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
+            aria-required="true"
           />
+
+          <label htmlFor="note-description">Description (optional)</label>
           <textarea
-            placeholder="Short Description"
+            id="note-description"
+            placeholder="Short summary of this note…"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-          ></textarea>
+            rows={3}
+          />
 
           <div className="upload-row">
-            <input
-              id="fileInput"
-              type="file"
-              onChange={(e) => setFile(e.target.files[0])}
-            />
-            <button className="upload-btn" onClick={handleUpload} disabled={loading}>
-              {loading ? "Uploading..." : "Upload Note"}
+            <label htmlFor="fileInput" className="file-label">
+              📎 Choose File
+              <input
+                id="fileInput"
+                ref={fileInputRef}
+                type="file"
+                className="file-input-hidden"
+                accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.gif"
+                onChange={(e) => setFile(e.target.files[0])}
+                aria-label="Choose a file to attach to the note"
+              />
+            </label>
+            {file && (
+              <span className="file-name" aria-live="polite">
+                {file.name}
+              </span>
+            )}
+            <button
+              className="upload-btn"
+              type="submit"
+              disabled={loading}
+              aria-busy={loading}
+            >
+              {loading ? "Uploading…" : "Upload Note"}
             </button>
           </div>
+        </form>
+      </section>
+
+      {/* ── Notes Section ──────────────────────────────────────── */}
+      <section aria-label="My notes">
+        <div className="notes-header-row">
+          <h2 className="notes-heading">📂 My Notes</h2>
+          <label htmlFor="search-notes" className="sr-only">
+            Search notes
+          </label>
+          <input
+            id="search-notes"
+            type="search"
+            className="search-bar"
+            placeholder="Search by title or description…"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            aria-label="Search your notes"
+          />
         </div>
-      </div>
 
-      {/* Notes Section */}
-      <div className="notes-header-row">
-        <h3 className="notes-heading">📂 My Notes</h3>
-        <input
-          type="text"
-          className="search-bar"
-          placeholder="Search notes..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-        />
-      </div>
-
-      <div className="notes-grid">
-        {filteredNotes.length === 0 ? (
-          <div className="note-card empty">
-            <p>📭 No notes found.</p>
-          </div>
-        ) : (
-          filteredNotes.map((note) => (
-            <div className="note-card" key={note._id}>
-              {editingId === note._id ? (
-                <div className="edit-form">
-                  <input
-                    type="text"
-                    value={editTitle}
-                    onChange={(e) => setEditTitle(e.target.value)}
-                    className="edit-input"
-                  />
-                  <textarea
-                    value={editDescription}
-                    onChange={(e) => setEditDescription(e.target.value)}
-                    className="edit-textarea"
-                  />
-                  <div className="note-actions">
-                    <button className="save-btn" onClick={() => handleEditSave(note._id)}>Save</button>
-                    <button className="cancel-btn" onClick={() => setEditingId(null)}>Cancel</button>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <div className="note-header-flex">
-                    <h4>{note.title}</h4>
-                    <span className="note-date">{new Date(note.createdAt).toLocaleDateString()}</span>
-                  </div>
-                  <p>{note.description}</p>
-                  <div className="note-actions">
-                    {note.fileUrl && <button className="view-btn" onClick={() => handleView(note.fileUrl)}>View file</button>}
-                    <button className="edit-btn" onClick={() => startEditing(note)}>Edit</button>
-                    <button className="delete-btn" onClick={() => handleDelete(note._id)}>Delete</button>
-                  </div>
-                </>
-              )}
+        <div className="notes-grid" role="list" aria-label="Notes list">
+          {fetching ? (
+            // ── Skeleton Loading ──
+            Array.from({ length: 6 }).map((_, i) => (
+              <SkeletonCard key={i} />
+            ))
+          ) : filteredNotes.length === 0 ? (
+            <div className="note-card empty" role="listitem">
+              <p>📭 No notes found. Add your first note above!</p>
             </div>
-          ))
-        )}
-      </div>
+          ) : (
+            filteredNotes.map((note) => (
+              <article className="note-card" key={note._id} role="listitem">
+                {editingId === note._id ? (
+                  <div className="edit-form" aria-label={`Editing note: ${note.title}`}>
+                    <label htmlFor={`edit-title-${note._id}`} className="sr-only">
+                      Edit title
+                    </label>
+                    <input
+                      id={`edit-title-${note._id}`}
+                      type="text"
+                      value={editTitle}
+                      onChange={(e) => setEditTitle(e.target.value)}
+                      className="edit-input"
+                      aria-required="true"
+                    />
+                    <label htmlFor={`edit-desc-${note._id}`} className="sr-only">
+                      Edit description
+                    </label>
+                    <textarea
+                      id={`edit-desc-${note._id}`}
+                      value={editDescription}
+                      onChange={(e) => setEditDescription(e.target.value)}
+                      className="edit-textarea"
+                    />
+                    <div className="note-actions">
+                      <button
+                        className="save-btn"
+                        onClick={() => handleEditSave(note._id)}
+                        aria-label="Save changes"
+                      >
+                        Save
+                      </button>
+                      <button
+                        className="cancel-btn"
+                        onClick={() => setEditingId(null)}
+                        aria-label="Cancel editing"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="note-header-flex">
+                      <h3>{note.title}</h3>
+                      <time
+                        className="note-date"
+                        dateTime={note.createdAt}
+                        aria-label={`Created on ${new Date(note.createdAt).toLocaleDateString()}`}
+                      >
+                        {new Date(note.createdAt).toLocaleDateString()}
+                      </time>
+                    </div>
+                    {note.description && <p>{note.description}</p>}
+                    <div className="note-actions">
+                      {note.fileUrl && (
+                        <button
+                          className="view-btn"
+                          onClick={() => handleView(note.fileUrl)}
+                          aria-label={`View file for note: ${note.title}`}
+                        >
+                          View File
+                        </button>
+                      )}
+                      <button
+                        className="edit-btn"
+                        onClick={() => startEditing(note)}
+                        aria-label={`Edit note: ${note.title}`}
+                      >
+                        Edit
+                      </button>
+                      {confirmDeleteId === note._id ? (
+                        <>
+                          <button
+                            className="delete-btn"
+                            onClick={() => handleDelete(note._id)}
+                            aria-label="Confirm delete"
+                          >
+                            ✓ Confirm
+                          </button>
+                          <button
+                            className="cancel-btn"
+                            onClick={() => setConfirmDeleteId(null)}
+                            aria-label="Cancel delete"
+                          >
+                            Cancel
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          className="delete-btn"
+                          onClick={() => setConfirmDeleteId(note._id)}
+                          aria-label={`Delete note: ${note.title}`}
+                        >
+                          Delete
+                        </button>
+                      )}
+                    </div>
+                  </>
+                )}
+              </article>
+            ))
+          )}
+        </div>
+      </section>
     </div>
   );
 }

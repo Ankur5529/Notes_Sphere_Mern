@@ -1,0 +1,12 @@
+node_modules
+**/node_modules
+.git
+.gitignore
+**/.env
+**/out.log
+**/out.txt
+images/
+README.md
+docker-compose.yml
+.github/
+**/build

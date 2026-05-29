@@ -21,6 +21,10 @@ const noteSchema = new mongoose.Schema({
     fileType: {
         type: String,
     },
+    cloudinaryPublicId: {
+        type: String,
+        default: null,
+    },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Note', noteSchema);

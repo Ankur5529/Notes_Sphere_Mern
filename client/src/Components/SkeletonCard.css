@@ -1,0 +1,71 @@
+/* ── Skeleton Card Base ────────────────────────────────── */
+.skeleton-card {
+    background: white;
+    padding: 25px;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+    border: 1px solid #f0f0f0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* ── Shimmer Animation ─────────────────────────────────── */
+@keyframes shimmer {
+    0%   { background-position: -600px 0; }
+    100% { background-position:  600px 0; }
+}
+
+.skeleton-line,
+.skeleton-btn {
+    background: linear-gradient(
+        90deg,
+        #f0f0f0 25%,
+        #e0e0e0 50%,
+        #f0f0f0 75%
+    );
+    background-size: 1200px 100%;
+    animation: shimmer 1.4s infinite linear;
+    border-radius: 6px;
+}
+
+/* ── Skeleton Shapes ───────────────────────────────────── */
+.skeleton-title {
+    height: 20px;
+    width: 70%;
+}
+
+.skeleton-body {
+    height: 14px;
+    width: 100%;
+}
+
+.skeleton-body.short {
+    width: 55%;
+}
+
+/* ── Skeleton Action Buttons ───────────────────────────── */
+.skeleton-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.skeleton-btn {
+    height: 32px;
+    width: 72px;
+    border-radius: 8px;
+}
+
+/* ── Screen Reader Only (Accessible Hidden Text) ────────── */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}

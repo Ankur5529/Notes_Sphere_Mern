@@ -1,10 +1,12 @@
 require("dotenv").config();
-console.log("ENV MONGO_URI =", process.env.MONGO_URI);
 
 
 const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
+const helmet = require("helmet");
+const rateLimit = require("express-rate-limit");
+
 const app = express();
 const authRoutes = require("./routes/auth.routes");
 const notesRoutes = require("./routes/notes.routes");
@@ -12,8 +14,36 @@ const path = require("path");
 
 
 //MiddleWare
+app.use(helmet()); // Set security HTTP headers
 app.use(cors());
 app.use(express.json());
+
+// Manual NoSQL injection sanitizer (express-mongo-sanitize is incompatible with Express 5)
+// Strips $ and . from all req.body keys to prevent injection attacks.
+app.use((req, res, next) => {
+    if (req.body && typeof req.body === "object") {
+        const sanitize = (obj) => {
+            for (const key in obj) {
+                if (/[$.]/.test(key)) {
+                    delete obj[key];
+                } else if (typeof obj[key] === "object") {
+                    sanitize(obj[key]);
+                }
+            }
+        };
+        sanitize(req.body);
+    }
+    next();
+});
+
+// Rate Limiting
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // Limit each IP to 100 requests per windowMs
+    message: "Too many requests from this IP, please try again after 15 minutes"
+});
+app.use("/api", limiter);
+
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 
@@ -27,13 +57,47 @@ if (process.env.MONGO_URI) {
     console.warn("MONGO_URI not set; skipping MongoDB connection.");
 }
 
-//Test route
-app.get('/', (req, res) => {
-    res.send("Notes Sphere Backend is running 🚀");
+// ── Serve React Frontend in Production ──────────────────────────────────────
+if (process.env.NODE_ENV === 'production') {
+    // Serve the static files from the React app
+    app.use(express.static(path.join(__dirname, 'public')));
+
+    // All unknown routes should be handled by React Router
+    app.get('*', (req, res, next) => {
+        if (req.url.startsWith('/api')) {
+            return next(); // Pass API routes to the backend
+        }
+        res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    });
+} else {
+    // Test route for development
+    app.get('/', (req, res) => {
+        res.send("Notes Sphere Backend is running 🚀");
+    });
+}
+
+// ── DB Health Check Middleware ──────────────────────────────────────────────
+// Returns a clear 503 if MongoDB is not connected yet,
+// instead of a cryptic "server error" reaching the user.
+app.use("/api", (req, res, next) => {
+    const state = mongoose.connection.readyState;
+    // 0=disconnected, 1=connected, 2=connecting, 3=disconnecting
+    if (state !== 1) {
+        return res.status(503).json({
+            message: "Database not connected. Please check your MongoDB Atlas cluster — it may be paused or your IP may not be whitelisted.",
+        });
+    }
+    next();
 });
 
 app.use("/api/auth", authRoutes);
 app.use("/api/notes", notesRoutes);
+
+// ── Global Error Handler ────────────────────────────────────────────────────
+app.use((err, req, res, next) => {
+    console.error("Unhandled error:", err.message);
+    res.status(500).json({ message: "An unexpected server error occurred." });
+});
 
 
 const PORT = process.env.PORT || 5001;
