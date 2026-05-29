@@ -171,9 +171,11 @@ export default function Dashboard({ onLogout }) {
       alert("No file attached to this note.");
       return;
     }
-    // Open in a new tab — Cloudinary serves files with correct content-type
-    // so PDFs open inline in browsers that support it, images preview normally
-    window.open(fileUrl, "_blank", "noopener,noreferrer");
+    // If the file URL is a relative API path (from GridFS), prepend the backend API_BASE
+    // This ensures it works perfectly even when Frontend (Vercel) and Backend (Render) are hosted separately.
+    const fullUrl = fileUrl.startsWith('/api') ? `${API_BASE}${fileUrl}` : fileUrl;
+    
+    window.open(fullUrl, "_blank", "noopener,noreferrer");
   };
 
   const filteredNotes = notes.filter(
