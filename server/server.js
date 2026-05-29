@@ -82,7 +82,8 @@ if (process.env.NODE_ENV === 'production') {
     app.use(express.static(path.join(__dirname, 'public')));
 
     // All unknown routes should be handled by React Router
-    app.get('*', (req, res) => {
+    // Express 5 no longer supports '*' in routes, so we use a catch-all middleware
+    app.use((req, res) => {
         res.sendFile(path.join(__dirname, 'public', 'index.html'));
     });
 } else {
