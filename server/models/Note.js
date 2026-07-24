@@ -25,6 +25,14 @@ const noteSchema = new mongoose.Schema({
         type: String,
         default: null,
     },
+    isPinned: {
+        type: Boolean,
+        default: false,
+    },
+    isShared: {
+        type: Boolean,
+        default: false,
+    },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Note', noteSchema);

@@ -321,6 +321,7 @@ h2.notes-heading {
   border-color: #e0e0e0;
 }
 
+
 .note-card h4 {
   margin: 0 0 10px 0;
   font-size: 18px;
@@ -336,6 +337,7 @@ h2.notes-heading {
 
 .note-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   margin-top: auto;
 }
@@ -466,4 +468,10 @@ h2.notes-heading {
   resize: vertical;
   min-height: 80px;
   flex-grow: 1;
+}
+
+.pin-badge, .share-badge {
+  font-size: 0.8em;
+  margin-left: 8px;
+  vertical-align: middle;
 }

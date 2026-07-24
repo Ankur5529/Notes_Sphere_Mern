@@ -174,4 +174,47 @@ router.delete('/:id', auth, async (req, res) => {
     }
 });
 
+// ── PUT /api/notes/:id/pin — Toggle pin status ───────────────────────────────
+router.put('/:id/pin', auth, async (req, res) => {
+    try {
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) return res.status(400).json({ message: 'Invalid Note ID.' });
+        const note = await Note.findOne({ _id: req.params.id, userId: req.user });
+        if (!note) return res.status(404).json({ message: 'Note not found.' });
+        
+        note.isPinned = !note.isPinned;
+        const updatedNote = await note.save();
+        res.json(updatedNote);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+// ── PUT /api/notes/:id/share — Toggle share status ───────────────────────────
+router.put('/:id/share', auth, async (req, res) => {
+    try {
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) return res.status(400).json({ message: 'Invalid Note ID.' });
+        const note = await Note.findOne({ _id: req.params.id, userId: req.user });
+        if (!note) return res.status(404).json({ message: 'Note not found.' });
+        
+        note.isShared = !note.isShared;
+        const updatedNote = await note.save();
+        res.json(updatedNote);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+// ── GET /api/notes/shared/:id — Fetch a publicly shared note ─────────────────
+router.get('/shared/:id', async (req, res) => {
+    try {
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) return res.status(400).json({ message: 'Invalid Note ID.' });
+        const note = await Note.findOne({ _id: req.params.id, isShared: true }).populate('userId', 'name');
+        if (!note) return res.status(404).json({ message: 'Note not found or not shared.' });
+        
+        res.json(note);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
 module.exports = router;

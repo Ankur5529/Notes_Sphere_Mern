@@ -4,7 +4,7 @@
 FROM node:20-alpine AS client-builder
 WORKDIR /app/client
 COPY client/package*.json ./
-RUN npm ci --silent
+RUN npm install --silent
 COPY client/ ./
 RUN npm run build
 
@@ -16,7 +16,7 @@ WORKDIR /app/server
 
 # Install only production dependencies
 COPY server/package*.json ./
-RUN npm ci --omit=dev --silent
+RUN npm install --omit=dev --silent
 
 # Copy server source
 COPY server/ ./

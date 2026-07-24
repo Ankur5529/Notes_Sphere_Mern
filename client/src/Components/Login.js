@@ -7,17 +7,27 @@ export default function Login({ onClose, onOpenSignup, onSucess }) {
     const navigate = useNavigate();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
-    const [error, setError] = useState("");
+    const [globalError, setGlobalError] = useState("");
+    const [fieldErrors, setFieldErrors] = useState({});
     const [loading, setLoading] = useState(false);
     const [guestLoading, setGuestLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
 
     const handleLogin = async (e) => {
         e?.preventDefault();
-        if (!email || !password) {
-            setError("Please fill in all fields.");
+        
+        const errors = {};
+        if (!email) errors.email = "Email is required.";
+        else if (!/\S+@\S+\.\S+/.test(email)) errors.email = "Please enter a valid email address.";
+        if (!password) errors.password = "Password is required.";
+
+        if (Object.keys(errors).length > 0) {
+            setFieldErrors(errors);
             return;
         }
-        setError("");
+
+        setGlobalError("");
+        setFieldErrors({});
         setLoading(true);
         try {
             const response = await fetch(`${API_BASE}/api/auth/login`, {
@@ -34,23 +44,28 @@ export default function Login({ onClose, onOpenSignup, onSucess }) {
                 navigate("/dashboard");
                 onClose();
             } else {
-                // Handle both express-validator errors array and plain message
+                // Handle express-validator errors array
                 if (data.errors && Array.isArray(data.errors)) {
-                    setError(data.errors[0].msg);
+                    const serverErrors = {};
+                    data.errors.forEach(err => {
+                        serverErrors[err.path || err.param] = err.msg;
+                    });
+                    setFieldErrors(serverErrors);
                 } else {
-                    setError(data.message || "Login failed. Please check your credentials.");
+                    setGlobalError(data.message || "Login failed. Please check your credentials.");
                 }
             }
         } catch (err) {
             console.error("Login error:", err);
-            setError("Network error. Please try again.");
+            setGlobalError("Network error. Please try again.");
         } finally {
             setLoading(false);
         }
     };
 
     const handleGuestLogin = async () => {
-        setError("");
+        setGlobalError("");
+        setFieldErrors({});
         setGuestLoading(true);
         try {
             const response = await fetch(`${API_BASE}/api/auth/guest-login`, {
@@ -65,11 +80,11 @@ export default function Login({ onClose, onOpenSignup, onSucess }) {
                 navigate("/dashboard");
                 onClose();
             } else {
-                setError(data.message || "Guest login failed.");
+                setGlobalError(data.message || "Guest login failed.");
             }
         } catch (err) {
             console.error("Guest login error:", err);
-            setError("Cannot reach the server. Make sure the backend is running on port 5000.");
+            setGlobalError("Cannot reach the server. Make sure the backend is running on port 5000.");
         } finally {
             setGuestLoading(false);
         }
@@ -99,9 +114,9 @@ export default function Login({ onClose, onOpenSignup, onSucess }) {
                 <h2 id="login-title">Welcome Back</h2>
                 <p className="modal-subtitle">Sign in to your account to continue</p>
 
-                {error && (
+                {globalError && (
                     <p className="error-text" role="alert" aria-live="polite">
-                        {error}
+                        {globalError}
                     </p>
                 )}
 
@@ -111,24 +126,50 @@ export default function Login({ onClose, onOpenSignup, onSucess }) {
                         <input
                             id="login-email"
                             type="email"
+                            className={fieldErrors.email ? "input-error" : ""}
                             placeholder="you@example.com"
                             value={email}
-                            onChange={(e) => setEmail(e.target.value)}
+                            onChange={(e) => {
+                                setEmail(e.target.value);
+                                if (fieldErrors.email) setFieldErrors({ ...fieldErrors, email: null });
+                            }}
                             autoComplete="email"
                             aria-required="true"
+                            aria-invalid={!!fieldErrors.email}
                         />
+                        {fieldErrors.email && <span className="field-error-text">{fieldErrors.email}</span>}
                     </div>
                     <div className="form-group">
                         <label htmlFor="login-password">Password</label>
-                        <input
-                            id="login-password"
-                            type="password"
-                            placeholder="Enter your password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            autoComplete="current-password"
-                            aria-required="true"
-                        />
+                        <div className="password-wrapper">
+                            <input
+                                id="login-password"
+                                type={showPassword ? "text" : "password"}
+                                className={fieldErrors.password ? "input-error" : ""}
+                                placeholder="Enter your password"
+                                value={password}
+                                onChange={(e) => {
+                                    setPassword(e.target.value);
+                                    if (fieldErrors.password) setFieldErrors({ ...fieldErrors, password: null });
+                                }}
+                                autoComplete="current-password"
+                                aria-required="true"
+                                aria-invalid={!!fieldErrors.password}
+                            />
+                            <button
+                                type="button"
+                                className="password-toggle-btn"
+                                onClick={() => setShowPassword(!showPassword)}
+                                aria-label={showPassword ? "Hide password" : "Show password"}
+                            >
+                                {showPassword ? (
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                                ) : (
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                                )}
+                            </button>
+                        </div>
+                        {fieldErrors.password && <span className="field-error-text">{fieldErrors.password}</span>}
                     </div>
 
                     <button

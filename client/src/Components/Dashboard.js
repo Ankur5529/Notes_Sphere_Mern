@@ -166,6 +166,49 @@ export default function Dashboard({ onLogout }) {
     }
   };
 
+  const handlePin = async (id) => {
+    const token = localStorage.getItem("token");
+    try {
+      const res = await fetch(`${API_BASE}/api/notes/${id}/pin`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const updatedNote = await res.json();
+        setNotes((prev) => prev.map((n) => (n._id === id ? updatedNote : n)));
+        showToast(updatedNote.isPinned ? "📌 Note pinned to top!" : "📍 Note unpinned.");
+      }
+    } catch (err) {
+      console.error("Error pinning note:", err);
+    }
+  };
+
+  const handleShare = async (note) => {
+    const token = localStorage.getItem("token");
+    try {
+      // If it's already shared, we toggle it off. Or we can just copy link if it's shared.
+      // But let's toggle it.
+      const res = await fetch(`${API_BASE}/api/notes/${note._id}/share`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const updatedNote = await res.json();
+        setNotes((prev) => prev.map((n) => (n._id === note._id ? updatedNote : n)));
+        
+        if (updatedNote.isShared) {
+          const shareUrl = `${window.location.origin}/shared/${note._id}`;
+          navigator.clipboard.writeText(shareUrl);
+          showToast("🔗 Link copied to clipboard! Anyone can now view this note.");
+        } else {
+          showToast("🔒 Note is now private.");
+        }
+      }
+    } catch (err) {
+      console.error("Error sharing note:", err);
+    }
+  };
+
   const handleView = (fileUrl) => {
     if (!fileUrl) {
       alert("No file attached to this note.");
@@ -178,12 +221,18 @@ export default function Dashboard({ onLogout }) {
     window.open(fullUrl, "_blank", "noopener,noreferrer");
   };
 
-  const filteredNotes = notes.filter(
-    (note) =>
-      note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (note.description &&
-        note.description.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  const filteredNotes = notes
+    .filter(
+      (note) =>
+        note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (note.description &&
+          note.description.toLowerCase().includes(searchQuery.toLowerCase()))
+    )
+    .sort((a, b) => {
+      if (a.isPinned && !b.isPinned) return -1;
+      if (!a.isPinned && b.isPinned) return 1;
+      return new Date(b.createdAt) - new Date(a.createdAt);
+    });
 
   return (
     <div className="dashboard">
@@ -362,7 +411,11 @@ export default function Dashboard({ onLogout }) {
                 ) : (
                   <>
                     <div className="note-header-flex">
-                      <h3>{note.title}</h3>
+                      <h3>
+                        {note.title}
+                        {note.isPinned && <span className="pin-badge" title="Pinned Note">📌</span>}
+                        {note.isShared && <span className="share-badge" title="Shared Note">🌍</span>}
+                      </h3>
                       <time
                         className="note-date"
                         dateTime={note.createdAt}
@@ -388,6 +441,20 @@ export default function Dashboard({ onLogout }) {
                         aria-label={`Edit note: ${note.title}`}
                       >
                         Edit
+                      </button>
+                      <button
+                        className="edit-btn"
+                        onClick={() => handlePin(note._id)}
+                        aria-label={note.isPinned ? "Unpin note" : "Pin note"}
+                      >
+                        {note.isPinned ? "Unpin" : "Pin"}
+                      </button>
+                      <button
+                        className="edit-btn"
+                        onClick={() => handleShare(note)}
+                        aria-label={note.isShared ? "Unshare note" : "Share note"}
+                      >
+                        {note.isShared ? "Unshare" : "Share"}
                       </button>
                       {confirmDeleteId === note._id ? (
                         <>

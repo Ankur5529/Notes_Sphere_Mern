@@ -8,6 +8,7 @@ import Footer from './Components/Footer';
 import Login from './Components/Login';
 import Signup from './Components/Signup';
 import Dashboard from './Components/Dashboard';
+import SharedNote from './Components/SharedNote';
 
 function App() {
   const [showLogin, setShowLogin] = useState(false);
@@ -21,8 +22,10 @@ function App() {
   return (
     <Routes>
       {/*Landing */}
-      <Route path="/" element={<> <Navbar onLoginClick={() => { setShowLogin(true); setShowSignup(false); }}
-        onSignupClick={() => { setShowSignup(true); setShowLogin(false); }} />
+      <Route path="/" element={isAuth ? <Navigate to="/dashboard" /> : (
+        <>
+          <Navbar onLoginClick={() => { setShowLogin(true); setShowSignup(false); }}
+            onSignupClick={() => { setShowSignup(true); setShowLogin(false); }} />
 
 
         <div className={showLogin || showSignup ? "blur-bg" : ""}>
@@ -39,11 +42,14 @@ function App() {
 
         {showSignup && (<Signup onClose={() => setShowSignup(false)} onOpenLogin={() => { setShowLogin(true); setShowSignup(false); }}
           onSucess={() => setIsAuth(true)} />)}
-      </>
-      } />
+        </>
+      )} />
 
       {/* Protected Dashboard */}
       <Route path="/dashboard" element={isAuth ? <Dashboard onLogout={() => setIsAuth(false)} /> : <Navigate to="/" />} />
+
+      {/* Public Shared Note */}
+      <Route path="/shared/:id" element={<SharedNote />} />
     </Routes>
   );
 }
