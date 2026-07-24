@@ -1,10 +1,8 @@
 import "./Login.css";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { API_BASE } from "../config";
 
 export default function Signup({ onClose, onOpenLogin, onSucess }) {
-    const navigate = useNavigate();
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
