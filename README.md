@@ -28,6 +28,8 @@
 
 | Feature | Description |
 |---|---|
+| 📌 **Note Pinning** | Keep your most important notes at the top of your dashboard for quick access. |
+| 🔗 **Public URL Sharing** | Generate a secure, read-only link to share specific notes with anyone, even if they don't have an account. |
 | 👤 **Guest Login** | Explore the full dashboard instantly — no sign-up required. One click, zero friction. |
 | ☁️ **Cloud Storage** | All files natively stored inside MongoDB using **GridFS Bucket**, keeping the app 100% stateless and deployable anywhere. |
 | 📤 **Secure Note Upload** | Upload PDF, DOC, and image files with strict type-validation (5MB limit). |
