@@ -2,7 +2,7 @@ import "./Login.css";
 import { useState } from "react";
 import { API_BASE } from "../config";
 
-export default function Signup({ onClose, onOpenLogin, onSucess }) {
+export default function Signup({ onClose, onOpenLogin, onSuccess }) {
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -44,8 +44,11 @@ export default function Signup({ onClose, onOpenLogin, onSucess }) {
             const data = await response.json();
 
             if (response.ok) {
-                // Don't auto-login, redirect to the login modal instead
-                onOpenLogin();
+                // Auto-login after successful signup
+                localStorage.setItem("token", data.token);
+                localStorage.setItem("user", JSON.stringify(data.user));
+                onSuccess();
+                onClose();
             } else {
                 // Handle validation error array from express-validator
                 if (data.errors && Array.isArray(data.errors)) {

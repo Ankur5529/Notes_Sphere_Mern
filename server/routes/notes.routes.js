@@ -39,6 +39,7 @@ router.get('/', auth, async (req, res) => {
 });
 
 // ── GET /api/notes/file/:id — Stream file from GridFS ────────────────────────
+// NOTE: This MUST be defined before /:id to avoid route shadowing
 router.get('/file/:id', async (req, res) => {
     try {
         if (!gfsBucket) {
@@ -67,6 +68,20 @@ router.get('/file/:id', async (req, res) => {
         
         const readStream = gfsBucket.openDownloadStream(fileId);
         readStream.pipe(res);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+// ── GET /api/notes/shared/:id — Fetch a publicly shared note ─────────────────
+// NOTE: This MUST be defined before /:id to avoid route shadowing
+router.get('/shared/:id', async (req, res) => {
+    try {
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) return res.status(400).json({ message: 'Invalid Note ID.' });
+        const note = await Note.findOne({ _id: req.params.id, isShared: true }).populate('userId', 'name');
+        if (!note) return res.status(404).json({ message: 'Note not found or not shared.' });
+        
+        res.json(note);
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
@@ -102,8 +117,9 @@ router.post('/upload', auth, upload.single('noteFile'), async (req, res) => {
                     uploadStream.on('error', reject);
                 });
 
-                // Generate URL that points to our own server's GET /file/:id route
-                fileUrl = `${process.env.NODE_ENV === 'production' ? '' : 'http://localhost:5000'}/api/notes/file/${uploadStream.id}`;
+                // FIX: Store a relative API path so it works in both dev (port 5001) and production
+                // The frontend's handleView() prepends API_BASE when the URL starts with '/api'
+                fileUrl = `/api/notes/file/${uploadStream.id}`;
                 cloudinaryPublicId = uploadStream.id.toString(); // Store GridFS ID for deletion later
                 fileType = req.file.mimetype;
             } catch (uploadErr) {
@@ -199,19 +215,6 @@ router.put('/:id/share', auth, async (req, res) => {
         note.isShared = !note.isShared;
         const updatedNote = await note.save();
         res.json(updatedNote);
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
-});
-
-// ── GET /api/notes/shared/:id — Fetch a publicly shared note ─────────────────
-router.get('/shared/:id', async (req, res) => {
-    try {
-        if (!mongoose.Types.ObjectId.isValid(req.params.id)) return res.status(400).json({ message: 'Invalid Note ID.' });
-        const note = await Note.findOne({ _id: req.params.id, isShared: true }).populate('userId', 'name');
-        if (!note) return res.status(404).json({ message: 'Note not found or not shared.' });
-        
-        res.json(note);
     } catch (err) {
         res.status(500).json({ message: err.message });
     }

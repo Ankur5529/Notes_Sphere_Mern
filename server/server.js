@@ -1,5 +1,17 @@
 require("dotenv").config();
 
+// ── Force IPv4 DNS resolution ────────────────────────────────────────────────
+// Fixes: "querySrv ECONNREFUSED" on networks that use IPv6 (hotspots, etc.)
+// Node 18+ defaults to verbatim (IPv6-first) DNS; this restores IPv4-first behavior.
+const dns = require("dns");
+dns.setDefaultResultOrder("ipv4first");
+
+// ── Startup Validation ─────────────────────────────────────────────────────
+if (!process.env.JWT_SECRET) {
+    console.error("FATAL: JWT_SECRET is not set. Server cannot start securely.");
+    process.exit(1);
+}
+
 
 const express = require("express");
 const cors = require("cors");
@@ -15,7 +27,12 @@ const path = require("path");
 
 //MiddleWare
 app.use(helmet()); // Set security HTTP headers
-app.use(cors());
+app.use(cors({
+    origin: process.env.CORS_ORIGIN
+        ? process.env.CORS_ORIGIN.split(",")
+        : ["http://localhost:3000"],
+    credentials: true,
+}));
 app.use(express.json());
 
 // Manual NoSQL injection sanitizer (express-mongo-sanitize is incompatible with Express 5)

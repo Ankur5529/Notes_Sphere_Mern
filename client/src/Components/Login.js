@@ -3,7 +3,7 @@ import { useState } from "react";
 import "./Login.css";
 import { API_BASE } from "../config";
 
-export default function Login({ onClose, onOpenSignup, onSucess }) {
+export default function Login({ onClose, onOpenSignup, onSuccess }) {
     const navigate = useNavigate();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
@@ -40,7 +40,7 @@ export default function Login({ onClose, onOpenSignup, onSucess }) {
             if (response.ok) {
                 localStorage.setItem("token", data.token);
                 localStorage.setItem("user", JSON.stringify(data.user));
-                onSucess();
+                onSuccess();
                 navigate("/dashboard");
                 onClose();
             } else {
@@ -76,7 +76,7 @@ export default function Login({ onClose, onOpenSignup, onSucess }) {
             if (response.ok) {
                 localStorage.setItem("token", data.token);
                 localStorage.setItem("user", JSON.stringify({ ...data.user, isGuest: true }));
-                onSucess();
+                onSuccess();
                 navigate("/dashboard");
                 onClose();
             } else {

@@ -36,12 +36,12 @@ function App() {
 
         {showLogin && (<Login onClose={() => setShowLogin(false)}
           onOpenSignup={() => { setShowSignup(true); setShowLogin(false); }}
-          onSucess={() => setIsAuth(true)} />
+          onSuccess={() => setIsAuth(true)} />
         )}
 
 
         {showSignup && (<Signup onClose={() => setShowSignup(false)} onOpenLogin={() => { setShowLogin(true); setShowSignup(false); }}
-          onSucess={() => setIsAuth(true)} />)}
+          onSuccess={() => setIsAuth(true)} />)}
         </>
       )} />
 
