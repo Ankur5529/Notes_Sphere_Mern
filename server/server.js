@@ -93,22 +93,10 @@ app.use("/api", (req, res, next) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/notes", notesRoutes);
 
-// ── Serve React Frontend in Production ──────────────────────────────────────
-if (process.env.NODE_ENV === 'production') {
-    // Serve the static files from the React app
-    app.use(express.static(path.join(__dirname, 'public')));
-
-    // All unknown routes should be handled by React Router
-    // Express 5 no longer supports '*' in routes, so we use a catch-all middleware
-    app.use((req, res) => {
-        res.sendFile(path.join(__dirname, 'public', 'index.html'));
-    });
-} else {
-    // Test route for development
-    app.get('/', (req, res) => {
-        res.send("Notes Sphere Backend is running 🚀");
-    });
-}
+// ── Root Route ──────────────────────────────────────────────────────────────
+app.get('/', (req, res) => {
+    res.send("Notes Sphere API is running 🚀");
+});
 
 // ── Global Error Handler ────────────────────────────────────────────────────
 app.use((err, req, res, next) => {
